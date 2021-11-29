@@ -1,18 +1,16 @@
-FROM alpine:latest
-LABEL maintainer "Steven Iveson <steve@iveson.eu>"
-LABEL source "https://github.com/sjiveson/nfs-server-alpine"
+FROM alpine:3.6
+LABEL maintainer "zijiesong"
 LABEL branch "master"
-COPY Dockerfile README.md /
 
-RUN apk add --no-cache --update --verbose nfs-utils bash iproute2 && \
-    rm -rf /var/cache/apk /tmp /sbin/halt /sbin/poweroff /sbin/reboot && \
-    mkdir -p /var/lib/nfs/rpc_pipefs /var/lib/nfs/v4recovery && \
-    echo "rpc_pipefs    /var/lib/nfs/rpc_pipefs rpc_pipefs      defaults        0       0" >> /etc/fstab && \
-    echo "nfsd  /proc/fs/nfsd   nfsd    defaults        0       0" >> /etc/fstab
+RUN set -ex && { \
+        echo 'http://mirrors.aliyun.com/alpine/v3.6/main'; \
+        echo 'http://mirrors.aliyun.com/alpine/v3.6/community'; \
+    } > /etc/apk/repositories \
+    && apk update && apk add bash nfs-utils && rm -rf /var/cache/apk/*
 
-COPY nfsd.sh /usr/bin/nfsd.sh
-COPY .bashrc /root/.bashrc
+EXPOSE 111 111/udp 2049 2049/udp \
+    32765 32765/udp 32766 32766/udp 32767 32767/udp 32768 32768/udp
 
-RUN chmod +x /usr/bin/nfsd.sh
-
-ENTRYPOINT ["/usr/bin/nfsd.sh"]
+COPY nfsd.sh /nfsd.sh
+RUN chmod +x /nfsd.sh
+ENTRYPOINT ["/nfsd.sh"]

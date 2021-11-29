@@ -32,7 +32,7 @@ else
 
   fsid=1
   for s in ${dir_arr[@]}; do
-    echo "$s *(rw,fsid=$fsid,async,no_subtree_check,no_auth_nlm,insecure,no_root_squash)" >> /etc/exports
+    echo "$s *(rw,fsid=$fsid,async,no_subtree_check,no_auth_nlm,insecure,no_root_squash)" >>/etc/exports
     let fsid+=1
   done
 fi
@@ -62,23 +62,17 @@ while true; do
     echo "Displaying rpcbind status..."
     /sbin/rpcinfo
 
-    # Only required if v3 will be used
-    # /usr/sbin/rpc.idmapd
-    # /usr/sbin/rpc.gssd -v
-    # /usr/sbin/rpc.statd
+    mount -t nfsd nfsd /proc/fs/nfsd
+    # Fixed nlockmgr port
+    echo 'fs.nfs.nlm_tcpport=32768' >>/etc/sysctl.conf
+    echo 'fs.nfs.nlm_udpport=32768' >>/etc/sysctl.conf
+    sysctl -p >/dev/null
 
-    echo "Starting NFS in the background..."
-    /usr/sbin/rpc.nfsd --debug 8 --no-udp --no-nfs-version 2 --no-nfs-version 3
-    echo "Exporting File System..."
-    if /usr/sbin/exportfs -rv; then
-      /usr/sbin/exportfs
-    else
-      echo "Export validation failed, exiting..."
-      exit 1
-    fi
-    echo "Starting Mountd in the background..."These
-    /usr/sbin/rpc.mountd --debug all --no-udp --no-nfs-version 2 --no-nfs-version 3
-    # --exports-file /etc/exports
+    rpcbind -w
+    rpc.nfsd -N 2 -V 3 -N 4 -N 4.1 8
+    exportfs -arfv
+    rpc.statd -p 32765 -o 32766
+    rpc.mountd -N 2 -V 3 -N 4 -N 4.1 -p 32767 -F
 
     # Check if NFS is now running by recording it's PID (if it's not running $pid will be null):
     pid=$(pidof rpc.mountd)
