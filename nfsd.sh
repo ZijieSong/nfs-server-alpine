@@ -55,13 +55,6 @@ while true; do
     cat /etc/exports
     echo ""
 
-    # Normally only required if v3 will be used
-    # But currently enabled to overcome an NFS bug around opening an IPv6 socket
-    echo "Starting rpcbind..."
-    /sbin/rpcbind -w
-    echo "Displaying rpcbind status..."
-    /sbin/rpcinfo
-
     mount -t nfsd nfsd /proc/fs/nfsd
     # Fixed nlockmgr port
     echo 'fs.nfs.nlm_tcpport=32768' >>/etc/sysctl.conf
