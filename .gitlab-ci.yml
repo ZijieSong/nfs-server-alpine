@@ -1,0 +1,22 @@
+image: docker-reg.devops.xiaohongshu.com/fulishe/ci:$CI_IMAGE_VERSION
+
+variables:
+  DOCKER_IMAGE_NAME: 'nfs-server'
+
+stages:
+  - deploy
+
+deploy:release:
+  stage: deploy
+  image: docker-reg.devops.xiaohongshu.com/library/docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $REGISTRY_USERNAME -p $REGISTRY_PASSWORD $REGISTRY_NAME
+  script:
+    - docker build -t docker-reg.devops.xiaohongshu.com/fulishe/$DOCKER_IMAGE_NAME:${CI_COMMIT_REF_NAME} .
+    - docker push docker-reg.devops.xiaohongshu.com/fulishe/$DOCKER_IMAGE_NAME:${CI_COMMIT_REF_NAME}
+  only:
+    - /^\d+(\.\d+)+$/
+
+
